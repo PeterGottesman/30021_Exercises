@@ -36,7 +36,7 @@
 #define DEBUG 0
 #endif
 
-#define pr_dbg(fmt, ...) if (DEBUG) printf(fmt, __VA_ARGS__)
+#define pr_dbg(fmt, ...) if (DEBUG) printf(fmt, ##__VA_ARGS__)
 
 int initPin(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t mode, uint8_t pupd, uint8_t otype)
 {
