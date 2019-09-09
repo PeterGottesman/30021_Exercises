@@ -10,6 +10,8 @@
    Last changed date:  $Date:  $
    ID:                 $Id:  $
 
+** Christine test change
+
 **********************************************************************/
 #include "stm32f30x_conf.h"
 #include "string.h"
@@ -85,7 +87,7 @@ int initPin(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t mode, uint8_t pupd, uint8_t
 int initJoystick(void)
 {
     int ret;
-	    
+
     // Right
     ret = initPin(GPIOC, 0, PIN_MODE_INPUT, PIN_PUPD_PD, PIN_OTYPE_RESET);
     if (ret)
@@ -109,7 +111,7 @@ int initJoystick(void)
 	pr_dbg("Failed to initialize PB5\n");
 	return ret;
     }
-    
+
     // Left
     ret = initPin(GPIOC, 1, PIN_MODE_INPUT, PIN_PUPD_PD, PIN_OTYPE_RESET);
     if (ret)
@@ -117,7 +119,7 @@ int initJoystick(void)
 	pr_dbg("Failed to initialize PC1\n");
 	return ret;
     }
-    
+
     // Down
     ret = initPin(GPIOB, 0, PIN_MODE_INPUT, PIN_PUPD_PD, PIN_OTYPE_RESET);
     if (ret)
