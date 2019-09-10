@@ -41,6 +41,16 @@
 // Should color hold
 volatile int offset = 0;
 
+struct timespec {
+    uint8_t hours;
+    uint8_t minutes;
+    uint8_t seconds;
+    uint8_t hundredths;
+};
+
+volatile struct timespec stopwatch;
+volatile int output = 0;
+
 int initPin(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t mode, uint8_t pupd, uint8_t otype)
 {
     int shift;
@@ -194,6 +204,55 @@ uint8_t readJoystick(void)
     return joyAndHappiness;
 }
 
+void TIM2_IRQHandler(void)
+{
+    stopwatch.hundredths++;
+
+    if (stopwatch.hundredths == 100)
+    {
+	stopwatch.hundredths = 0;
+	stopwatch.seconds++;
+
+	output = 1;
+
+	if (stopwatch.seconds == 60)
+	{
+	    stopwatch.seconds = 0;
+	    stopwatch.minutes++;
+
+	    if (stopwatch.minutes == 60)
+	    {
+		stopwatch.minutes = 0;
+		stopwatch.hours++;
+	    }
+	}
+    }
+
+	
+    TIM2->SR &= ~0x1;
+}
+
+int initCounter(void)
+{
+    // Initialize Syscfg clock
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+
+    // Disable and set to defaults
+    TIM2->CR1 = 0x0;
+    
+    TIM2->ARR = 630000; // Computed from formula on handout
+    TIM2->PSC = 0x0;
+
+    // Enable
+    TIM2->CR1 |= 0x1;
+    TIM2->DIER |= 0x0001;
+
+    NVIC_SetPriority(TIM2_IRQn, 1);
+    NVIC_EnableIRQ(TIM2_IRQn);
+
+    return 0;
+}
+
 void EXTI9_5_IRQHandler(void)
 {
     offset++;
@@ -237,9 +296,11 @@ int main(void)
     // Enable interrupt on line 5
     EXTI->IMR |= 1 << 5;
 
-    NVIC_SetPriority(EXTI9_5_IRQn, 1);
+    NVIC_SetPriority(EXTI9_5_IRQn, 2);
     NVIC_EnableIRQ(EXTI9_5_IRQn);
 
+    initCounter();
+    
     uint8_t last = -1;
 
     char* directions[] = {"center ", "right ", "left ", "down ", "up "};
@@ -264,10 +325,18 @@ int main(void)
             }
             last = tmp;
             printf("Joystick in direction(s) %s\n", outstring);
-
-	    printf("Setting color to %x\n", color);
 	    setLed(color);
         }
+	
+	if (output)
+	{
+	    output = 0;
+	    printf("Time is %d:%d:%d.%02d\n",
+		   stopwatch.hours,
+		   stopwatch.minutes,
+		   stopwatch.seconds,
+		   stopwatch.hundredths);
+	}
     }
 }
 
