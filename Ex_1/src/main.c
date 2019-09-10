@@ -82,6 +82,53 @@ int initPin(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t mode, uint8_t pupd, uint8_t
     return 0;
 }
 
+int initLed(void)
+{
+    int ret;
+    
+    // Red
+    ret = initPin(GPIOB, 4, PIN_MODE_OUTPUT, PIN_PUPD_NONE, PIN_OTYPE_OD);
+    if (ret)
+    {
+	pr_dbg("Failed to initialize PB4\n");
+	return -1;
+    }
+
+    // Green
+    ret = initPin(GPIOC, 7, PIN_MODE_OUTPUT, PIN_PUPD_NONE, PIN_OTYPE_OD);
+    if (ret)
+    {
+	pr_dbg("Failed to initialize PC7\n");
+	return -1;
+    }
+
+    // Blue
+    ret = initPin(GPIOA, 9, PIN_MODE_OUTPUT, PIN_PUPD_NONE, PIN_OTYPE_OD);
+    if (ret)
+    {
+	pr_dbg("Failed to initialize PA9\n");
+	return -1;
+    }
+
+    return 0;
+}
+
+void setLed(uint8_t color)
+{
+    int red = (color & 1<<2)>>2;
+    int green = (color & 1<<1)>>1;
+    int blue = color & 1;
+
+    GPIOB->ODR &= ~(1<<4);
+    GPIOB->ODR |= red << 4;
+
+    GPIOC->ODR &= ~(1<<7);
+    GPIOC->ODR |= green << 7;
+
+    GPIOA->ODR &= ~(1<<9);
+    GPIOA->ODR |= blue << 9;
+}
+
 int initJoystick(void)
 {
     int ret;
@@ -159,13 +206,24 @@ int main(void)
 	pr_dbg("Joystick Initialized\n");
     }
 
+    ret = initLed();
+    if (ret)
+    {
+	pr_dbg("Failed to initialize LED\n");
+    } else {
+	pr_dbg("LED Initialized\n");
+    }
+    
+
     uint8_t last = -1;
 
     char* directions[] = {"center ", "right ", "left ", "down ", "up "};
     char outstring[50];
 
+    uint8_t color = 0;
     while(1)
     {
+	color = 7;
         uint8_t tmp = readJoystick();
         if (tmp != last)
         {
@@ -176,10 +234,14 @@ int main(void)
                 {
                     strcpy(&outstring[idx], directions[4-i]);
                     idx += strlen(directions[4-i]);
+		    color += i+1;
                 }
             }
             last = tmp;
             printf("Joystick in direction(s) %s\n", outstring);
+
+	    printf("Setting color to %x\n", color);
+	    setLed(color);
         }
     }
 }
