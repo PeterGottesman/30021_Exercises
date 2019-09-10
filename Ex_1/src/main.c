@@ -38,6 +38,9 @@
 
 #define pr_dbg(fmt, ...) if (DEBUG) printf(fmt, ##__VA_ARGS__)
 
+// Should color hold
+volatile int offset = 0;
+
 int initPin(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t mode, uint8_t pupd, uint8_t otype)
 {
     int shift;
@@ -191,6 +194,13 @@ uint8_t readJoystick(void)
     return joyAndHappiness;
 }
 
+void EXTI9_5_IRQHandler(void)
+{
+    offset++;
+    
+    EXTI->PR |= EXTI_PR_PR0;
+}
+
 int main(void)
 {
     int ret;
@@ -213,7 +223,22 @@ int main(void)
     } else {
 	pr_dbg("LED Initialized\n");
     }
-    
+
+    // Initialize Syscfg clock
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+    SYSCFG->EXTICR[1] &= ~(0xF << 4);
+    SYSCFG->EXTICR[1] |= 1 << 4;
+
+    // Trigger interrupt on line 5 on rising edge only
+    EXTI->RTSR |= 1 << 5;
+    EXTI->FTSR &= ~(1 << 5);
+
+    // Enable interrupt on line 5
+    EXTI->IMR |= 1 << 5;
+
+    NVIC_SetPriority(EXTI9_5_IRQn, 1);
+    NVIC_EnableIRQ(EXTI9_5_IRQn);
 
     uint8_t last = -1;
 
@@ -234,7 +259,7 @@ int main(void)
                 {
                     strcpy(&outstring[idx], directions[4-i]);
                     idx += strlen(directions[4-i]);
-		    color += i+1;
+		    color += i+offset;
                 }
             }
             last = tmp;
