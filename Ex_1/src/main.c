@@ -263,7 +263,7 @@ void EXTI9_5_IRQHandler(void)
 
 void printTimespec(struct timespec *ts)
 {
-    printf("Time is %d:%d:%d.%02d\n",
+    printf("Time is %02d:%02d:%02d.%02d\n",
 	   ts->hours,
 	   ts->minutes,
 	   ts->seconds,
