@@ -49,6 +49,8 @@ struct timespec {
 };
 
 volatile struct timespec stopwatch;
+struct timespec split1, split2;
+
 volatile int output = 0;
 
 int initPin(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t mode, uint8_t pupd, uint8_t otype)
@@ -248,7 +250,6 @@ int initCounter(void)
     TIM2->DIER |= 0x0001;
 
     NVIC_SetPriority(TIM2_IRQn, 1);
-    NVIC_EnableIRQ(TIM2_IRQn);
 
     return 0;
 }
@@ -260,9 +261,19 @@ void EXTI9_5_IRQHandler(void)
     EXTI->PR |= EXTI_PR_PR0;
 }
 
+void printTimespec(struct timespec *ts)
+{
+    printf("Time is %d:%d:%d.%02d\n",
+	   ts->hours,
+	   ts->minutes,
+	   ts->seconds,
+	   ts->hundredths);
+}
+
 int main(void)
 {
     int ret;
+    int enabled = 0;
 
     init_usb_uart(9600);
     pr_dbg("UART Initialized\n");
@@ -309,6 +320,7 @@ int main(void)
     uint8_t color = 0;
     while(1)
     {
+	// Handle Joystick Input
 	color = 7;
         uint8_t tmp = readJoystick();
         if (tmp != last)
@@ -323,20 +335,75 @@ int main(void)
 		    color += i+offset;
                 }
             }
+
+	    // center
+	    if (tmp & (1 << 4))
+	    {
+		if (enabled)
+		{
+		    printf("Stopping stopwatch at ");
+		    printTimespec((void *)&stopwatch);
+		    NVIC_DisableIRQ(TIM2_IRQn);
+		} else {
+		    printf("Starting stopwatch at ");
+		    printTimespec((void *)&stopwatch);
+		    NVIC_EnableIRQ(TIM2_IRQn);
+		}
+
+		enabled = !enabled;
+	    }
+
+	    // left
+	    if (tmp & (1 << 2) && enabled)
+	    {
+		NVIC_DisableIRQ(TIM2_IRQn);
+
+		memcpy(&split1, (void *)&stopwatch, sizeof(struct timespec));
+
+		printf("Time split 1:  ");
+		printTimespec(&split1);
+
+		NVIC_EnableIRQ(TIM2_IRQn);
+	    }
+
+	    // right
+	    if (tmp & (1 << 3) && enabled)
+	    {
+		NVIC_DisableIRQ(TIM2_IRQn);
+
+		memcpy(&split2, (void *)&stopwatch, sizeof(struct timespec));
+
+		printf("Time split 2:  ");
+		printTimespec(&split2);
+
+		NVIC_EnableIRQ(TIM2_IRQn);
+	    }
+
+	    // down
+	    if (tmp & (1 << 1))
+	    {
+		if (enabled)
+		{
+		    NVIC_DisableIRQ(TIM2_IRQn);
+
+		    printf("Stopping and resetting stopwatch at ");
+		    printTimespec((void *)&stopwatch);
+
+		    memset((void *)&stopwatch, 0, sizeof(struct timespec));
+
+		    enabled = 0;
+		}
+	    }
+
             last = tmp;
             printf("Joystick in direction(s) %s\n", outstring);
 	    setLed(color);
-        }
-	
+        } // if tmp != last
+
 	if (output)
 	{
 	    output = 0;
-	    printf("Time is %d:%d:%d.%02d\n",
-		   stopwatch.hours,
-		   stopwatch.minutes,
-		   stopwatch.seconds,
-		   stopwatch.hundredths);
+	    printTimespec((void *)&stopwatch);
 	}
-    }
+    }  // while true
 }
-
