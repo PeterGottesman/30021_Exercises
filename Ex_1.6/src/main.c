@@ -38,10 +38,10 @@
 
 #define pr_dbg(fmt, ...) if (DEBUG) printf(fmt, ##__VA_ARGS__)
 
-// Should color hold
-volatile int offset = 0;
-volatile unsigned cap1, cap2;
+volatile int count = 0;
+volatile unsigned cap1[10], cap2[10];
 volatile int output = 0;
+volatile int running = 0;
 
 int initPin(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t mode, uint8_t pupd, uint8_t otype)
 {
@@ -205,9 +205,11 @@ uint8_t readJoystick(void)
 
 void TIM2_IRQHandler(void)
 {
-    cap1 = TIM_GetCapture1(TIM2);
-    cap2 = TIM_GetCapture2(TIM2);
+    cap1[count%10] = TIM_GetCapture1(TIM2);
+    cap2[count%10] = TIM_GetCapture2(TIM2);
     output = 1;
+    count++;
+    setLed(0b111);
     
     TIM_ClearITPendingBit(TIM2, TIM_IT_CC1);
 }
@@ -218,7 +220,7 @@ int initCounter(void)
     // CH1 resets on rising edge
     // CH2 Reset on falling
     // CH1-CH2 cycles low
-    // CH2-CH1 cycles high
+    // CH2 cycles high
     // duty cycle = high/total
     
     // Initialize Syscfg clock
@@ -238,12 +240,13 @@ int initCounter(void)
     // Set active input for TIM2_CCR1
     MODIFY_REG(TIM2->CCMR1, TIM_CCMR1_CC1S, TIM_CCMR1_CC1S_0);
 
+    // Set CC1 polarity
     TIM2->CCER &= ~(TIM_CCER_CC1NP | TIM_CCER_CC1P);
     
     // Set active input for TIM2_CCR2
     MODIFY_REG(TIM2->CCMR1, TIM_CCMR1_CC2S, TIM_CCMR1_CC2S_1);
 
-    // Set polarity
+    // Set CC2 polarity
     TIM2->CCER &= ~TIM_CCER_CC2NP;
     TIM2->CCER |= TIM_CCER_CC2P;
 
@@ -278,9 +281,60 @@ int initCounter(void)
     TIM2->DIER |= TIM_DIER_CC1IE;
 
     NVIC_SetPriority(TIM2_IRQn, 1);
-    NVIC_EnableIRQ(TIM2_IRQn);
 
     return 0;
+}
+
+void EXTI9_5_IRQHandler(void)
+{
+    if (running)
+    {
+	NVIC_DisableIRQ(TIM2_IRQn);
+	running = 0;
+	setLed(0b011);
+    }
+    else
+    {
+	setLed(0b101);
+	running = 1;
+	NVIC_EnableIRQ(TIM2_IRQn);
+    }
+    
+    EXTI_ClearITPendingBit(EXTI_Line5);
+}
+
+void EXTI0_IRQHandler(void)
+{
+    __disable_irq();
+
+    memset(cap1, 0, 10 * sizeof(int));
+    memset(cap2, 0, 10 * sizeof(int));
+    count = 0;
+
+    EXTI_ClearITPendingBit(EXTI_Line0);
+    __enable_irq();
+}
+
+int initInputs(void)
+{
+    // Initialize Syscfg clock
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+    SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOB, EXTI_PinSource5);
+    SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOB, EXTI_PinSource0);
+
+    // Trigger interrupt on line 5 on rising edge only
+    EXTI->RTSR |= 1 << 5 | 1;
+    EXTI->FTSR &= ~(1 << 5 | 1);
+
+    // Enable interrupt on line 5
+    EXTI->IMR |= 1 << 5 | 1;
+
+    NVIC_SetPriority(EXTI9_5_IRQn, 2);
+    NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+    NVIC_SetPriority(EXTI0_IRQn, 2);
+    NVIC_EnableIRQ(EXTI0_IRQn);
 }
 
 int main(void)
@@ -307,37 +361,36 @@ int main(void)
     }
 
     initCounter();
-    
-    uint8_t last = -1;
-    uint8_t color = 0;
+    initInputs();
+
+    setLed(0b011);
+
     while(1)
     {
 	// Handle Joystick Input
-	color = 7;
-        uint8_t tmp = readJoystick();
-        if (tmp != last)
-        {
-            for (int i = 0; i < 5; ++i)
-            {
-                if ((tmp >> i) % 2 == 1)
-                {
-		    color += i+offset;
-                }
-            }
-
-            last = tmp;
-	    setLed(color);
-	    
-        } // if tmp != last
-
 	if (output)
 	{
 	    float period, duty, freq;
-	    period = cap1/1000000.0;
-	    duty = (1.0*cap2)/(cap1);
-	    freq = 1.0/period;
+	    float pavg, davg;
+	    int limit;
+
+	    pavg = 0.0f;
+	    davg = 0.0f;
+	    limit = 10 > count ? count : 10;
+	    for (int i = 0; i < limit; ++i)
+	    {
+		pavg += cap1[i];
+		davg += cap2[i];
+	    }
+	    pavg /= limit;
+	    davg /= limit;
 	    
+	    period = pavg / 1000000.0;
+	    duty = davg/pavg;
+	    freq = 1.0/period;
+		    
 	    printf("frequency(hz): %f, period: %f, duty: %f\n", freq, period, duty);
+	    setLed(0b101);
 	    output = 0;
 	}
     }  // while true
