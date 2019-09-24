@@ -30,23 +30,19 @@ int main(void)
   lcd_write_string("3line", fbuffer, 10, 2);
   lcd_write_string("4line", fbuffer, 0, 3);
   lcd_push_buffer(fbuffer);
-int tempfloat;
+
 int tempval;
 
-  tempfloat = read_float_flash(PG31_BASE,0);
-  init_page_flash(PG31_BASE);
-  FLASH_Unlock();
-  write_float_flash(PG31_BASE,0,(float)1.0);
-  FLASH_Lock();
-  tempfloat = read_float_flash(PG31_BASE,0);
+
   tempval = read_word_flash(PG31_BASE,0);
-  if(tempval!=(uint32_t)0xDEADBEEF)
-      {
-          init_page_flash(PG31_BASE);
-  FLASH_Unlock();
-  write_word_flash(PG31_BASE,0,0xDEADBEEF);
-  FLASH_Lock();
+  init_page_flash(PG31_BASE);
+   FLASH_Unlock();
+  for (int i=0;i<512;i++)
+  {
+      write_word_flash(PG31_BASE,i,0xDEADBEEF);
   }
+  FLASH_Lock();
+
   tempval = read_hword_flash(PG31_BASE,0);
   while(1)
   {
