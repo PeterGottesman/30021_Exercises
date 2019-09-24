@@ -21,9 +21,10 @@ int main(void)
 
 {
   init_spi_lcd();
-  uint8_t fbuffer;
+  uint8_t fbuffer[512];
   memset(fbuffer,0xAA,512); // Sets each element of the buffer to 0xAA
   lcd_push_buffer(fbuffer);
+
 
   while(1)
   {
