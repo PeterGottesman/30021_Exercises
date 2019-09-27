@@ -30,7 +30,7 @@ int initPin(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t mode, uint8_t pupd, uint8_t
 	    RCC->AHBENR |= RCC_AHBPeriph_GPIOF;
 	    break;
 	default:
-	    pr_dbg("GPIO 0x%p not recognized\n", GPIO);
+	    //pr_dbg("GPIO 0x%p not recognized\n", GPIO);
 	    return -1;
     }
 
@@ -55,7 +55,7 @@ int initPinAlternate(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t AF)
 int initLed(void)
 {
     int ret;
-    
+
     // Red
     ret = initPin(GPIOB, 4, PIN_MODE_OUTPUT, PIN_PUPD_NONE, PIN_OTYPE_OD);
     if (ret)
@@ -102,7 +102,7 @@ void setLed(uint8_t color)
 int initJoystick(void)
 {
     int ret;
-	    
+
     // Right
     ret = initPin(GPIOC, 0, PIN_MODE_INPUT, PIN_PUPD_PD, PIN_OTYPE_RESET);
     if (ret)
@@ -126,7 +126,7 @@ int initJoystick(void)
 	pr_dbg("Failed to initialize PB5\n");
 	return ret;
     }
-    
+
     // Left
     ret = initPin(GPIOC, 1, PIN_MODE_INPUT, PIN_PUPD_PD, PIN_OTYPE_RESET);
     if (ret)
@@ -134,7 +134,7 @@ int initJoystick(void)
 	pr_dbg("Failed to initialize PC1\n");
 	return ret;
     }
-    
+
     // Down
     ret = initPin(GPIOB, 0, PIN_MODE_INPUT, PIN_PUPD_PD, PIN_OTYPE_RESET);
     if (ret)
