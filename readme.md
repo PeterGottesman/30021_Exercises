@@ -21,3 +21,5 @@ Ex2_3_1           : 2.2 b) FLASH Memory (writing)
 Ex2_2_ADC         : 2.2 Analog-to-Digital Conversion
 
 Ex2.3-ActuallyTho : 2.3 Absolute voltage from ADC measurement
+
+Ex2.4             : 2.4 Calibrate the ADC
