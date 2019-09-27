@@ -1,6 +1,8 @@
 #include "stm32f30x_conf.h"
 #include "gpio.h"
 
+#define pr_dbg(...)
+
 int initPin(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t mode, uint8_t pupd, uint8_t otype)
 {
     int shift;
@@ -60,7 +62,7 @@ int initLed(void)
     ret = initPin(GPIOB, 4, PIN_MODE_OUTPUT, PIN_PUPD_NONE, PIN_OTYPE_OD);
     if (ret)
     {
-	pr_dbg("Failed to initialize PB4\n");
+	//pr_dbg("Failed to initialize PB4\n");
 	return -1;
     }
 
@@ -68,7 +70,7 @@ int initLed(void)
     ret = initPin(GPIOC, 7, PIN_MODE_OUTPUT, PIN_PUPD_NONE, PIN_OTYPE_OD);
     if (ret)
     {
-	pr_dbg("Failed to initialize PC7\n");
+	//pr_dbg("Failed to initialize PC7\n");
 	return -1;
     }
 
@@ -76,7 +78,7 @@ int initLed(void)
     ret = initPin(GPIOA, 9, PIN_MODE_OUTPUT, PIN_PUPD_NONE, PIN_OTYPE_OD);
     if (ret)
     {
-	pr_dbg("Failed to initialize PA9\n");
+	//pr_dbg("Failed to initialize PA9\n");
 	return -1;
     }
 

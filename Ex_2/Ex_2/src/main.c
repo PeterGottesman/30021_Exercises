@@ -22,6 +22,7 @@
 #define VREFINT_CAL *((uint16_t*) ((uint32_t) 0x1FFFF7BA))   //calibrated at 3.3V@ 30C 
 
 volatile int display=0;
+volatile int calculate_calfact=0;
 
 void initADC(int calib)
 {
@@ -70,6 +71,7 @@ void TIM2_IRQHandler(void)
     display=1;
     TIM2->SR &= ~0x1; //Clear Interrupt bit
 }
+
 int initTimer(void)
 {
     // Initialize Syscfg clock
@@ -91,9 +93,40 @@ int initTimer(void)
     return 0;
 }
 
+void EXTI9_5_IRQHandler(void)
+{
+    calculate_calfact=1;
+    EXTI->PR |= EXTI_PR_PR0;
+}
+
+void initINT9_5(void)
+{
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+    SYSCFG->EXTICR[1] &= ~(0xF << 4);
+    SYSCFG->EXTICR[1] |= 1 << 4;
+    
+    EXTI->RTSR |= 1 << 5;
+    EXTI->FTSR &= ~(1 << 5);
+
+    EXTI->IMR |= 1 << 5;
+
+    NVIC_SetPriority(EXTI9_5_IRQn, 2);
+    NVIC_EnableIRQ(EXTI9_5_IRQn);
+}
+
+void save_cal2flash(float calfactor1, float calfactor2)
+{
+    FLASH_Unlock();
+
+    write_float_flash(PG31_BASE, 0, calfactor1);
+    write_float_flash(PG31_BASE, 1, calfactor2);
+    
+    FLASH_Lock();
+}
+
 int main(void)
 {
-    float Vdda;
+    float Vdda, calfactor1, calfactor2;
     char meas1[26];
     char meas2[26];
     uint8_t fbuffer[512];
@@ -106,6 +139,8 @@ int main(void)
 
     initADC(1);
     initTimer();
+    initJoystick();
+    initINT9_5();
 
     ADC1_2->CCR |= ADC12_CCR_VREFEN;
     ADC_RegularChannelConfig(ADC1, ADC_Channel_18, 1, ADC_SampleTime_181Cycles5);
@@ -114,16 +149,19 @@ int main(void)
     uint16_t Vref_data = ADC_GetConversionValue(ADC1); // Read the ADC value
     Vdda = 3.3 * VREFINT_CAL/Vref_data;
 
+    // Save the two calfactors to flash only once
+    //save_cal2flash(0.998, 0.997); 
+
     while(1)
     {
         if(display==1)
         {
-            uint16_t CH1=ADC_measure_PA(ADC_Channel_1);
-            uint16_t CH2=ADC_measure_PA(ADC_Channel_2);
-	    float Vc1 = Vdda/FULL_SCALE * CH1;
-	    float Vc2 = Vdda/FULL_SCALE * CH2;
-            snprintf(meas1,25,"%d %.2fV",CH1, Vc1);
-            snprintf(meas2,25,"%d %.2fV",CH2, Vc2);
+	    uint16_t CH1 = ADC_measure_PA(ADC_Channel_1);
+	    uint16_t CH2 = ADC_measure_PA(ADC_Channel_2);
+	    float Vc1 = Vdda/FULL_SCALE * CH1 * calfactor1;
+	    float Vc2 = Vdda/FULL_SCALE * CH2 * calfactor2;
+	    snprintf(meas1,25,"%.2fV, cal: %f", Vc1, calfactor1);
+            snprintf(meas2,25,"%.2fV, cal: %f", Vc2, calfactor2);
             lcd_write_string("OUTPUT1",fbuffer,0,0);
             lcd_write_string(meas1,fbuffer,3,1);
             lcd_write_string("OUTPUT2",fbuffer,0,2);
@@ -131,6 +169,52 @@ int main(void)
             lcd_push_buffer(fbuffer);
             display=0;
         }
+
+	if(calculate_calfact==1)
+	{
+
+	    //Read calfactors from flash
+	    calfactor1 = read_float_flash(PG31_BASE, 0);
+	    calfactor2 = read_float_flash(PG31_BASE, 1);
+    
+	    if(calfactor1 < 0.5 || calfactor1 > 1.5)
+	    {
+		calfactor1 = 1.0;
+	    }
+	    if(calfactor2 < 0.5 || calfactor2 > 1.5)
+	    {
+		calfactor2 = 1.0;
+	    }
+
+	    //Calibrate the calfactors by sending through 3.2V and clicking
+	    //...joystick center button
+	    
+	    /*
+	    uint32_t sum = 0;
+	    uint16_t avg = 0;
+	    float V1, V2;
+	    for (int i = 0; i < 16; ++i)
+	    {
+		sum += ADC_measure_PA(ADC_Channel_1);
+	    }
+	    avg = (uint16_t)(sum/16);
+
+	    V1 = Vdda/FULL_SCALE * avg;
+	    calfact1 = 3.2/V1;
+	    
+	    sum = 0;
+	    avg = 0;
+	    for (int i = 0; i < 16; ++i)
+	    {
+		sum += ADC_measure_PA(ADC_Channel_2);
+	    }
+	    avg = (uint16_t)(sum/16);
+
+	    V2 = Vdda/FULL_SCALE * avg;
+	    calfact2 = 3.2/V2;
+	    calculate_calfact=0;
+	    */	
+	}
 
     }
 }
