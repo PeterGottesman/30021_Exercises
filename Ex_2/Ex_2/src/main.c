@@ -17,6 +17,10 @@
 #include "flash.h"
 #include "gpio.h"
 #include "stdio.h"
+
+#define FULL_SCALE 4095
+#define VREFINT_CAL *((uint16_t*) ((uint32_t) 0x1FFFF7BA))   //calibrated at 3.3V@ 30C 
+
 volatile int display=0;
 
 void initADC(int calib)
@@ -38,8 +42,6 @@ void initADC(int calib)
     for(uint32_t i = 0; i < 10000; i++);
     if(calib)
     {
-
-
         ADC1->CR &= ~ADC_CR_ADEN; //Make sure ADC is disabled
         ADC1->CR &= ~ADC_CR_ADCALDIF; //Use single ended calibration
         ADC1->CR |= ADC_CR_ADCAL; //Start calibration
@@ -53,6 +55,7 @@ void initADC(int calib)
     while (!ADC1->ISR & ADC_ISR_ADRD){}
 
 }
+
 uint16_t ADC_measure_PA(uint8_t ch)
 {
     ADC_RegularChannelConfig(ADC1,ch, 1, ADC_SampleTime_1Cycles5);
@@ -60,13 +63,12 @@ uint16_t ADC_measure_PA(uint8_t ch)
     while (ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == 0); // Wait for ADC read
     uint16_t x = ADC_GetConversionValue(ADC1); // Read the ADC value
     return x;
-
 }
 
 void TIM2_IRQHandler(void)
 {
-display=1;
-TIM2->SR &= ~0x1; //Clear Interrupt bit
+    display=1;
+    TIM2->SR &= ~0x1; //Clear Interrupt bit
 }
 int initTimer(void)
 {
@@ -91,18 +93,26 @@ int initTimer(void)
 
 int main(void)
 {
+    float Vdda;
+    char meas1[26];
+    char meas2[26];
+    uint8_t fbuffer[512];
 
     initPin(GPIOA,0,PIN_MODE_INPUT,PIN_PUPD_NONE, PIN_OTYPE_RESET);
     initPin(GPIOA,1,PIN_MODE_INPUT,PIN_PUPD_NONE, PIN_OTYPE_RESET);
     init_spi_lcd();
-    uint8_t fbuffer[512];
     memset(fbuffer,0x00,512);
     lcd_push_buffer(fbuffer);
 
     initADC(1);
     initTimer();
-    char meas1[26];
-    char meas2[26];
+
+    ADC1_2->CCR |= ADC12_CCR_VREFEN;
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_18, 1, ADC_SampleTime_181Cycles5);
+    ADC_StartConversion(ADC1); // Start ADC read
+    while (ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == 0); // Wait for ADC read
+    uint16_t Vref_data = ADC_GetConversionValue(ADC1); // Read the ADC value
+    Vdda = 3.3 * VREFINT_CAL/Vref_data;
 
     while(1)
     {
@@ -110,15 +120,16 @@ int main(void)
         {
             uint16_t CH1=ADC_measure_PA(ADC_Channel_1);
             uint16_t CH2=ADC_measure_PA(ADC_Channel_2);
-            snprintf(meas1,25,"%d",CH1);
-            snprintf(meas2,25,"%d",CH2);
+	    float Vc1 = Vdda/FULL_SCALE * CH1;
+	    float Vc2 = Vdda/FULL_SCALE * CH2;
+            snprintf(meas1,25,"%d %.2fV",CH1, Vc1);
+            snprintf(meas2,25,"%d %.2fV",CH2, Vc2);
             lcd_write_string("OUTPUT1",fbuffer,0,0);
             lcd_write_string(meas1,fbuffer,3,1);
             lcd_write_string("OUTPUT2",fbuffer,0,2);
             lcd_write_string(meas2,fbuffer,3,3);
             lcd_push_buffer(fbuffer);
             display=0;
-
         }
 
     }
