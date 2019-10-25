@@ -8,18 +8,21 @@ uint8_t spi3_recv_byte() {
     int data;
     while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_RXNE) != SET) { }
     data = 0xFF & SPI_I2S_ReceiveData16(SPI3);
-    while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_RXNE) != SET) { }
+//    while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_RXNE) != SET) { }
     return data;
 }
 
-uint8_t spi3_transmit_byte(uint8_t data) {
+void spi3_transmit_byte(uint8_t data) {
     while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_TXE) != SET) { }
     SPI_SendData8(SPI3, data);
     while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_TXE) != SET) { }
-    return 0;
-    //return spi3_recv_byte();
 }
 
+void spi3_transmit_word(uint16_t data) {
+    while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_TXE) != SET) { }
+    SPI_I2S_SendData16(SPI3, data);
+    while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_TXE) != SET) { }
+}
 
 uint8_t gyro_read_reg(uint8_t addr)
 {
@@ -27,7 +30,7 @@ uint8_t gyro_read_reg(uint8_t addr)
     addr |= 0x80;
     
     GYRO_CS_LOW();
-    spi3_transmit_byte(addr);
+    spi3_transmit_word(addr << 8);
     data = spi3_recv_byte();
     GYRO_CS_HIGH();
 
@@ -39,9 +42,11 @@ void gyro_write_reg(uint8_t addr, uint8_t data)
     addr &= 0x7f;
     
     GYRO_CS_LOW();
-    spi3_transmit_byte(addr);
-    spi3_transmit_byte(data);
+    spi3_transmit_word((addr<<8) | data);
+    for (int i = 0; i < 10; ++i);
     GYRO_CS_HIGH();
+
+    //gyro_read_reg(0);
 }
 
 void gyro_reset()
@@ -51,16 +56,26 @@ void gyro_reset()
     gyro_write_reg(GYRO_CTRL_REG1, 0x0F);
 }
 
+uint8_t gyro_temp()
+{
+    return gyro_read_reg(GYRO_OUT_TEMP);
+}
+
+uint8_t gyro_status()
+{
+    return gyro_read_reg(GYRO_OUT_STAT);
+}
+
 uint8_t gyro_whoami()
 {
     return gyro_read_reg(GYRO_WHOAMI);
 }
 
-void gyro_read(uint16_t *x, uint16_t *y, uint16_t *z)
+void gyro_read(int16_t *x, int16_t *y, int16_t *z)
 {
-    *x = (gyro_read_reg(GYRO_OUT_X_L)<<8);// | gyro_read_reg(GYRO_OUT_X_L);
-    *y = (gyro_read_reg(GYRO_OUT_Y_L)<<8);// | gyro_read_reg(GYRO_OUT_Y_L);
-    *z = (gyro_read_reg(GYRO_OUT_Z_L)<<8);// | gyro_read_reg(GYRO_OUT_Z_L);
+    *x = (gyro_read_reg(GYRO_OUT_X_H)<<8) | gyro_read_reg(GYRO_OUT_X_L);
+    *y = (gyro_read_reg(GYRO_OUT_Y_H)<<8) | gyro_read_reg(GYRO_OUT_Y_L);
+    *z = (gyro_read_reg(GYRO_OUT_Z_H)<<8) | gyro_read_reg(GYRO_OUT_Z_L);
 }
 
 void init_spi_gyro() {

@@ -18,21 +18,32 @@
 
 int main(void)
 {
-    uint16_t x,y,z;
-    uint8_t id;
+    int16_t x,y,z;
+    uint8_t id, temp, status;
     init_usb_uart(9600);
     init_spi_gyro();
-    printf("whoami: %x\n", gyro_whoami());
+
 
     x = y = z = 0;
-    id = 0;
+    //gyro_whoami();
+    printf("%d\n", spi3_recv_byte());
+    printf("%d\n", spi3_recv_byte());
+    while ((id = gyro_whoami()) != 0xD3)
+    {
+	x++;
+    }
+    printf("%d\n", x);
     while(1)
     {
+	//printf("x: %x\n", x);
+	id = gyro_whoami();
+	temp = gyro_temp();
+	status = gyro_status();
 	//id = gyro_whoami();
-	//gyro_read(&x, &y, &z);
-	x = gyro_read_reg(GYRO_OUT_X_L);
-	printf("x: %x\n", x);
-	//printf("x: %04x, y: %04x, z: %04x, whoami: %02x\n ", x, y, z, id);
-	//for(int i = 0; i < 10000; ++i);
+	gyro_read(&x, &y, &z);
+
+	printf("id: %02x, temp: %02x, status: %02x\t", id, temp, status);
+	printf("x: %d, y: %d, z: %d\n", x, y, z);
+	//for(int i = 0; i < 100; ++i);
     }
 }

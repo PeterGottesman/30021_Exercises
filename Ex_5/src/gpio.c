@@ -49,7 +49,7 @@ int initPin(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t mode, uint8_t pupd, uint8_t
 
 int initPinAlternate(GPIO_TypeDef *GPIO, uint8_t pin, uint8_t AF)
 {
-    initPin(GPIO, pin, PIN_MODE_ALTERNATE, PIN_PUPD_NONE, PIN_OTYPE_RESET);
+    initPin(GPIO, pin, PIN_MODE_ALTERNATE, PIN_PUPD_PD, PIN_OTYPE_RESET);
     GPIO_PinAFConfig(GPIO, pin, AF);
     return 0;
 }
