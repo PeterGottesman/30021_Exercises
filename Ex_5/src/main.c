@@ -19,27 +19,23 @@
 int main(void)
 {
     int16_t x,y,z;
-    uint8_t id, temp, status;
+    uint8_t id, temp, status, count;
     init_usb_uart(9600);
     init_spi_gyro();
+    id = gyro_whoami();
 
-
-    x = y = z = 0;
-    //gyro_whoami();
-    printf("%d\n", spi3_recv_byte());
-    printf("%d\n", spi3_recv_byte());
-    while ((id = gyro_whoami()) != 0xD3)
+    count = 0;
+    while (SPI_GetReceptionFIFOStatus(SPI3) != SPI_ReceptionFIFOStatus_Empty && count < 4)
     {
-	x++;
+	SPI3->DR;
+	count++;
     }
-    printf("%d\n", x);
+    
+    x = y = z = 0;
     while(1)
     {
-	//printf("x: %x\n", x);
-	id = gyro_whoami();
 	temp = gyro_temp();
 	status = gyro_status();
-	//id = gyro_whoami();
 	gyro_read(&x, &y, &z);
 
 	printf("id: %02x, temp: %02x, status: %02x\t", id, temp, status);

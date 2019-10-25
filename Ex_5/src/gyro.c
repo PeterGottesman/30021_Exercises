@@ -6,9 +6,8 @@
 
 uint8_t spi3_recv_byte() {
     int data;
-    while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_RXNE) != SET) { }
+    while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_RXNE) != SET) {  }
     data = 0xFF & SPI_I2S_ReceiveData16(SPI3);
-//    while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_RXNE) != SET) { }
     return data;
 }
 
@@ -19,7 +18,7 @@ void spi3_transmit_byte(uint8_t data) {
 }
 
 void spi3_transmit_word(uint16_t data) {
-    while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_TXE) != SET) { }
+    while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_TXE) != SET) {  }
     SPI_I2S_SendData16(SPI3, data);
     while(SPI_I2S_GetFlagStatus(SPI3, SPI_I2S_FLAG_TXE) != SET) { }
 }
@@ -39,14 +38,15 @@ uint8_t gyro_read_reg(uint8_t addr)
 
 void gyro_write_reg(uint8_t addr, uint8_t data)
 {
+    uint16_t initial_status = SPI_GetReceptionFIFOStatus(SPI3);
     addr &= 0x7f;
     
     GYRO_CS_LOW();
     spi3_transmit_word((addr<<8) | data);
-    for (int i = 0; i < 10; ++i);
     GYRO_CS_HIGH();
 
-    //gyro_read_reg(0);
+    while (SPI_GetReceptionFIFOStatus(SPI3) == initial_status);
+    SPI3->DR;
 }
 
 void gyro_reset()
@@ -96,7 +96,7 @@ void init_spi_gyro() {
     SPI3->CR1 |= 0x0008; // Set Baud Rate Prescaler (0x0000 - 2, 0x0008 - 4, 0x0018 - 8, 0x0020 - 16, 0x0028 - 32, 0x0028 - 64, 0x0030 - 128, 0x0038 - 128)
     SPI3->CR1 |= 0x0000; // Set Bit Order (0x0000 - MSB First, 0x0080 - LSB First)
     SPI3->CR2 &= ~0x0F00; // Clear CR2 Register
-    SPI3->CR2 |= 0x0800; // Set Number of Bits (0x0300 - 4, 0x0400 - 5, 0x0500 - 6, ...);
+    SPI3->CR2 |= 0x0F00; // Set Number of Bits (0x0300 - 4, 0x0400 - 5, 0x0500 - 6, ...);
     SPI3->I2SCFGR &= ~0x0800; // Disable I2S
     SPI3->CRCPR = 7; // Set CRC polynomial order
     SPI3->CR2 &= ~0x1000;
