@@ -13,7 +13,10 @@
 #define GYRO_OUT_Y_H 0x2B
 #define GYRO_OUT_Z_L 0x2C
 #define GYRO_OUT_Z_H 0x2D
+#define GYRO_WHOAMI 0x0F
 
 void gyro_read(uint16_t *x, uint16_t *y, uint16_t *z);
 void init_spi_gyro();
+uint8_t gyro_whoami();
+uint8_t spi3_recv_byte();
 #endif
