@@ -43,10 +43,11 @@ void gyro_write_reg(uint8_t addr, uint8_t data)
     
     GYRO_CS_LOW();
     spi3_transmit_word((addr<<8) | data);
-    GYRO_CS_HIGH();
 
     while (SPI_GetReceptionFIFOStatus(SPI3) == initial_status);
     SPI3->DR;
+
+    GYRO_CS_HIGH();
 }
 
 void gyro_reset()
