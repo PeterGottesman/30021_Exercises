@@ -9,7 +9,7 @@ uint8_t gyro_read_reg(uint8_t addr)
 {
     uint8_t data;
     addr |= 0x80;
-    
+
     GYRO_CS_LOW();
     spi3_transmit_word(addr << 8);
     data = spi3_recv_byte();
@@ -22,9 +22,11 @@ void gyro_write_reg(uint8_t addr, uint8_t data)
 {
     uint16_t initial_status = SPI_GetReceptionFIFOStatus(SPI3);
     addr &= 0x7f;
-    
+
     GYRO_CS_LOW();
     spi3_transmit_word((addr<<8) | data);
+    while (SPI_GetReceptionFIFOStatus(SPI3)==initial_status);
+    SPI3->DR;
     GYRO_CS_HIGH();
 }
 
@@ -63,6 +65,6 @@ void init_gyro()
     initPin(GPIOD, 2, PIN_MODE_OUTPUT, PIN_PUPD_NONE, PIN_OTYPE_RESET);
 
     // Wait for initializations
-    for (uint32_t i = 0 ; i < 5000000 ; i++) { __asm__("nop"); };
+    //for (uint32_t i = 0 ; i < 5000000 ; i++) { __asm__("nop"); };
     gyro_reset();
 }

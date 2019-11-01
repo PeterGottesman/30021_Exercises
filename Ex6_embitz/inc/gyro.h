@@ -20,7 +20,7 @@
 #define GYRO_WHOAMI 0x0F
 
 void gyro_read(int16_t *x, int16_t *y, int16_t *z);
-void init_spi_gyro();
+void init_gyro();
 uint8_t gyro_temp();
 uint8_t gyro_status();
 uint8_t gyro_whoami();

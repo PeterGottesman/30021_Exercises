@@ -9,7 +9,7 @@ uint8_t mag_read_reg(uint8_t addr)
 {
     uint8_t data;
     addr |= 0x80;
-    
+
     MAG_CS_LOW();
     spi3_transmit_word(addr << 8);
     data = spi3_recv_byte();
@@ -22,7 +22,7 @@ void mag_write_reg(uint8_t addr, uint8_t data)
 {
     uint16_t initial_status = SPI_GetReceptionFIFOStatus(SPI3);
     addr &= 0x7f;
-    
+
     MAG_CS_LOW();
     spi3_transmit_word((addr<<8) | data);
 
@@ -35,8 +35,8 @@ void mag_write_reg(uint8_t addr, uint8_t data)
 void mag_reset()
 {
     MAG_CS_HIGH();
-    mag_write_reg(MAG_CTRL_REG3, 0x85);
-    //mag_write_reg(MAG_CTRL_REG1, 0x67);
+    mag_write_reg(MAG_CTRL_REG3, 0x84);
+    //mag_write_reg(MAG_CTRL_REG1, 0x10);
 }
 
 uint8_t mag_status()
