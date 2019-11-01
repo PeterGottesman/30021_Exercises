@@ -3,8 +3,8 @@
 #include "stm32f30x_conf.h"
 #include "gpio.h"
 
-#define MAG_CS_GPIO GPIOA
-#define MAG_CS_PIN 4
+#define MAG_CS_GPIO GPIOB
+#define MAG_CS_PIN 0
 
 #define MAG_CS_LOW() (MAG_CS_GPIO->ODR &=  ~(0x0001 << MAG_CS_PIN))
 #define MAG_CS_HIGH() (MAG_CS_GPIO->ODR |=  (0x0001 << MAG_CS_PIN))

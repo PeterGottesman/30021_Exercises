@@ -220,18 +220,18 @@
 	"stm32f30x_conf.h"
 	"gpio.h"
 
-1572611148 source:c:\users\s143961\documents\di\github\30021_ex1\ex6_embitz\src\gyro.c
+1572620742 source:c:\users\s143961\documents\di\github\30021_ex1\ex6_embitz\src\gyro.c
 	"gyro.h"
 	"spi.h"
 
-1572611148 c:\users\s143961\documents\di\github\30021_ex1\ex6_embitz\inc\gyro.h
+1572620742 c:\users\s143961\documents\di\github\30021_ex1\ex6_embitz\inc\gyro.h
 	"gpio.h"
 
-1572611148 source:c:\users\s143961\documents\di\github\30021_ex1\ex6_embitz\src\mag.c
+1572620742 source:c:\users\s143961\documents\di\github\30021_ex1\ex6_embitz\src\mag.c
 	"mag.h"
 	"spi.h"
 
-1572611148 c:\users\s143961\documents\di\github\30021_ex1\ex6_embitz\inc\mag.h
+1572621151 c:\users\s143961\documents\di\github\30021_ex1\ex6_embitz\inc\mag.h
 	"stm32f30x_conf.h"
 	"gpio.h"
 
@@ -495,4 +495,13 @@
 
 1572613836 source:c:\users\shara\onedrive\desktop\git\30021_ex1\ex6_embitz\src\system_stm32f30x.c
 	"stm32f30x.h"
+
+1572620742 source:c:\users\s143961\documents\di\github\30021_ex1\ex6_embitz\src\main.c
+	"stm32f30x_conf.h"
+	"30021_io.h"
+	"gyro.h"
+	"accel.h"
+	"mag.h"
+	"spi.h"
+	<stdio.h>
 
