@@ -6,6 +6,8 @@
 #define MAG_CS_GPIO GPIOB
 #define MAG_CS_PIN 0
 
+#define MAG_SENSITIVITY 0.00048828125
+
 #define MAG_CS_LOW() (MAG_CS_GPIO->ODR &=  ~(0x0001 << MAG_CS_PIN))
 #define MAG_CS_HIGH() (MAG_CS_GPIO->ODR |=  (0x0001 << MAG_CS_PIN))
 #define MAG_CTRL_REG1 0x20
@@ -21,7 +23,7 @@
 #define MAG_OUT_Z_H 0x2D
 #define MAG_WHOAMI 0x0F
 
-void mag_read(int16_t *x, int16_t *y, int16_t *z);
+void mag_read(float *x, float *y, float *z);
 void init_mag();
 //uint8_t gyro_temp();
 uint8_t mag_status();

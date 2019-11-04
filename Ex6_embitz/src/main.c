@@ -5,10 +5,10 @@
 **
 **********************************************************************/
 /*
-   Last committed:     $Revision: 00 $
-   Last changed by:    $Author: $
-   Last changed date:  $Date:  $
-   ID:                 $Id:  $
+  Last committed:     $Revision: 00 $
+  Last changed by:    $Author: $
+  Last changed date:  $Date:  $
+  ID:                 $Id:  $
 
 **********************************************************************/
 #include "stm32f30x_conf.h"
@@ -21,9 +21,9 @@
 
 int main(void)
 {
-    int16_t acc_x, acc_y, acc_z;
-    int16_t mag_x, mag_y, mag_z;
-    int16_t gyro_x, gyro_y, gyro_z;
+    float acc_x, acc_y, acc_z;
+    float mag_x, mag_y, mag_z;
+    float gyro_x, gyro_y, gyro_z;
     uint8_t acc_id, mag_id, gyro_id;
 
     init_usb_uart(9600);
@@ -45,12 +45,12 @@ int main(void)
 	//status = accel_status();
 	accel_read(&acc_x, &acc_y, &acc_z);
 	mag_read(&mag_x, &mag_y, &mag_z);
-    gyro_read(&gyro_x,&gyro_y,&gyro_z);
+	gyro_read(&gyro_x,&gyro_y,&gyro_z);
 
-    printf("acc: %02x, x: %d, y: %d, z: %d\t", acc_id, acc_x, acc_y, acc_z);
-    printf("mag: %02x, x: %d, y: %d, z: %d\t", mag_id, mag_x, mag_y, mag_z);
-    printf("gyro: %02x, x: %d, y: %d, z: %d\n", gyro_id, gyro_x, gyro_y, gyro_z);
+	printf("acc: %02x, x: %.02f, y: %.02f, z: %.02f\t", acc_id, acc_x, acc_y, acc_z);
+	printf("mag: %02x, x: %.02f, y: %.02f, z: %.02f\t", mag_id, mag_x, mag_y, mag_z);
+	printf("gyro: %02x, x: %.02f, y: %.02f, z: %.02f\n", gyro_id, gyro_x, gyro_y, gyro_z);
 
-	for(int i = 0; i < 100; ++i);
+	for(int i = 0; i < 1000000; ++i);
     }
 }

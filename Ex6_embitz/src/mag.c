@@ -49,11 +49,16 @@ uint8_t mag_whoami()
     return mag_read_reg(MAG_WHOAMI);
 }
 
-void mag_read(int16_t *x, int16_t *y, int16_t *z)
+void mag_read(float *x, float *y, float *z)
 {
-    *x = (mag_read_reg(MAG_OUT_X_H)<<8) | mag_read_reg(MAG_OUT_X_L);
-    *y = (mag_read_reg(MAG_OUT_Y_H)<<8) | mag_read_reg(MAG_OUT_Y_L);
-    *z = (mag_read_reg(MAG_OUT_Z_H)<<8) | mag_read_reg(MAG_OUT_Z_L);
+    int16_t xi, yi, zi;
+    xi = (mag_read_reg(MAG_OUT_X_H)<<8) | mag_read_reg(MAG_OUT_X_L);
+    yi = (mag_read_reg(MAG_OUT_Y_H)<<8) | mag_read_reg(MAG_OUT_Y_L);
+    zi = (mag_read_reg(MAG_OUT_Z_H)<<8) | mag_read_reg(MAG_OUT_Z_L);
+
+    *x = (float)xi * MAG_SENSITIVITY;
+    *y = (float)yi * MAG_SENSITIVITY;
+    *z = (float)zi * MAG_SENSITIVITY;
 }
 
 void init_mag()

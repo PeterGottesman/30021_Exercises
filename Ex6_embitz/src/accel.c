@@ -49,11 +49,20 @@ uint8_t accel_whoami()
     return accel_read_reg(ACCEL_WHOAMI);
 }
 
-void accel_read(int16_t *x, int16_t *y, int16_t *z)
+void accel_read(float *x, float *y, float *z)
 {
-    *x = (accel_read_reg(ACCEL_OUT_X_H)<<8) | accel_read_reg(ACCEL_OUT_X_L);
-    *y = (accel_read_reg(ACCEL_OUT_Y_H)<<8) | accel_read_reg(ACCEL_OUT_Y_L);
-    *z = (accel_read_reg(ACCEL_OUT_Z_H)<<8) | accel_read_reg(ACCEL_OUT_Z_L);
+    int16_t xi, yi, zi;
+    xi = (accel_read_reg(ACCEL_OUT_X_H)<<8) | accel_read_reg(ACCEL_OUT_X_L);
+    yi = (accel_read_reg(ACCEL_OUT_Y_H)<<8) | accel_read_reg(ACCEL_OUT_Y_L);
+    zi = (accel_read_reg(ACCEL_OUT_Z_H)<<8) | accel_read_reg(ACCEL_OUT_Z_L);
+
+    xi -= ACCEL_XCAL;
+    yi -= ACCEL_YCAL;
+    zi -= ACCEL_ZCAL;
+
+    *x = (float)xi * ACCEL_SENSITIVITY;
+    *y = (float)yi * ACCEL_SENSITIVITY;
+    *z = (float)zi * ACCEL_SENSITIVITY;
 }
 
 void init_accel()

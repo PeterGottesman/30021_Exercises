@@ -52,11 +52,20 @@ uint8_t gyro_whoami()
     return gyro_read_reg(GYRO_WHOAMI);
 }
 
-void gyro_read(int16_t *x, int16_t *y, int16_t *z)
+void gyro_read(float *x, float *y, float *z)
 {
-    *x = (gyro_read_reg(GYRO_OUT_X_H)<<8) | gyro_read_reg(GYRO_OUT_X_L);
-    *y = (gyro_read_reg(GYRO_OUT_Y_H)<<8) | gyro_read_reg(GYRO_OUT_Y_L);
-    *z = (gyro_read_reg(GYRO_OUT_Z_H)<<8) | gyro_read_reg(GYRO_OUT_Z_L);
+    int16_t xi, yi, zi;
+    xi = (gyro_read_reg(GYRO_OUT_X_H)<<8) | gyro_read_reg(GYRO_OUT_X_L);
+    yi = (gyro_read_reg(GYRO_OUT_Y_H)<<8) | gyro_read_reg(GYRO_OUT_Y_L);
+    zi = (gyro_read_reg(GYRO_OUT_Z_H)<<8) | gyro_read_reg(GYRO_OUT_Z_L);
+
+    xi -= GYRO_XCAL;
+    yi -= GYRO_YCAL;
+    zi -= GYRO_ZCAL;
+
+    *x = (float)xi * GYRO_SENSITIVITY;
+    *y = (float)yi * GYRO_SENSITIVITY;
+    *z = (float)zi * GYRO_SENSITIVITY;
 }
 
 void init_gyro()
