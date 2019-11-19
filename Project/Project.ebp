@@ -89,6 +89,12 @@
 		<Unit filename="cmsis\core_cm4_simd.h" />
 		<Unit filename="cmsis\core_cmFunc.h" />
 		<Unit filename="cmsis\core_cmInstr.h" />
+		<Unit filename="inc\30021_io.h" />
+		<Unit filename="inc\adc.h" />
+		<Unit filename="inc\charset.h" />
+		<Unit filename="inc\flash.h" />
+		<Unit filename="inc\gpio.h" />
+		<Unit filename="inc\lcd.h" />
 		<Unit filename="inc\stm32f30x.h" />
 		<Unit filename="inc\stm32f30x_conf.h" />
 		<Unit filename="inc\system_stm32f30x.h" />
@@ -179,6 +185,21 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="SPL\src\stm32f30x_wwdg.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\30021_io.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\adc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\flash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\gpio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\lcd.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\main.c">
