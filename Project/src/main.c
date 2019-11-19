@@ -17,6 +17,7 @@
 #include "adc.h"
 #include <stdio.h>
 #include "accel.h"
+#include "spi.h"
 
 
 #define Ftimer 64000000
@@ -105,7 +106,7 @@ int initCoilLeft(void)
 
 int main(void)
 {
-    // Electromagnet dynamic range is (roughly) from .94 to 1.23 volts
+    /* Electromagnet dynamic range is (roughly) from .94 to 1.23 volts */
     initCoilRight();
     initCoilLeft();
     initPinAlternate(GPIOA, GPIO_PinSource6, GPIO_AF_1);
@@ -113,7 +114,7 @@ int main(void)
 
     float Vdda;
     /*char meas1[26];
-    char meas2[26];*/
+      char meas2[26];*/
 
     initPin(GPIOA,0,PIN_MODE_INPUT,PIN_PUPD_NONE, PIN_OTYPE_RESET);
     initPin(GPIOA,1,PIN_MODE_INPUT,PIN_PUPD_NONE, PIN_OTYPE_RESET);
@@ -134,37 +135,62 @@ int main(void)
 
     float x,y,z;
     uint8_t id, status;
-    init_usb_uart(9600);
     spi3_init();
     init_accel();
-    init_mag();
     id = accel_whoami();
 
     x = y = z = 0;
 
+    float error, integral, desired, actual, output;
+    float Kp, Ki, bias;
+    float dt;
+
+    dt = 1;
+    Kp = 5;
+    Ki = 1;
+    bias = integral = 0;
+    
+    int count = 0;
+
     while (1)
     {
-	for (int i = 0; i < 10000000; ++i);
-	int tmp = TIM17->CCR1;
-	TIM17->CCR1 = TIM16->CCR1;
-	TIM16->CCR1 = tmp;
+	/* for (int i = 0; i < 10000000; ++i); */
+	count++;
+        if (count % 30 == 0)
+	{
+          int tmp = TIM17->CCR1;
+          TIM17->CCR1 = TIM16->CCR1;
+          TIM16->CCR1 = tmp;
+        } 
 
-	uint16_t CH1=ADC_measure_PA(ADC_Channel_1);
-    uint16_t CH2=ADC_measure_PA(ADC_Channel_2);
-    float Vc1 = (rat) * CH1;
-    float Vc2 = (rat) * CH2;
-    /*snprintf(meas1,25,"%d %.2fV",CH1, Vc1);
-    snprintf(meas2,25,"%d %.2fV",CH2, Vc2);
-    printf("meas1: %s\tmeas2: %s\t", meas1, meas2);*/
-    printf("CH1: %d\t CH2: %d\t", CH1, CH2);
-    printf("Vc1: %d\t Vc2: %d\n", (int)Vc1, (int)Vc2);
-    for(int i = 0; i < 1000000; i++);
+        /* uint16_t CH1=ADC_measure_PA(ADC_Channel_1); */
+	/* uint16_t CH2=ADC_measure_PA(ADC_Channel_2); */
+	/* float Vc1 = (rat) * CH1; */
+	/* float Vc2 = (rat) * CH2; */
+	/* /\*snprintf(meas1,25,"%d %.2fV",CH1, Vc1); */
+	/*   snprintf(meas2,25,"%d %.2fV",CH2, Vc2); */
+	/*   printf("meas1: %s\tmeas2: %s\t", meas1, meas2);*\/ */
+	/* printf("CH1: %d\t CH2: %d\t", CH1, CH2); */
+	/* printf("Vc1: %d\t Vc2: %d\n", (int)Vc1, (int)Vc2); */
+	//for(int i = 0; i < 1000000; i++);
 
-    status = accel_status();
+	status = accel_status();
 	accel_read(&x, &y, &z);
 
-	printf("id: %02x, status: %02x\t", id, status);
-	printf("x: %f, y: %f, z: %f\n", x, y, z);
-	for(int i = 0; i < 100; ++i);
+	/* printf("id: %02x, status: %02x\t", id, status); */
+	/* printf("x: %f, y: %f, z: %f\n", x, y, z); */
+
+	// Desired acceleration in Y axis
+	desired = -0.4f;
+	actual = y;
+	error = desired - actual;
+
+	integral = 0.9 * integral + (error * dt);
+	output = Kp * error + Ki * integral + bias;
+
+	printf("actual: %f, error: %.5f, integral: %.5f, output: %.5f\n",
+	       actual, error, integral, output);
+
+	for(int i = 0; i < 1000000; ++i);
     }
 }
