@@ -253,4 +253,5 @@ void init_spi_lcd() {
     SPI2->CR1 |= 0x0040; // Enable SPI2
 
     lcd_reset();
-}*/
+}
+*/

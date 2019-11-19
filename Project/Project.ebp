@@ -90,11 +90,15 @@
 		<Unit filename="cmsis\core_cmFunc.h" />
 		<Unit filename="cmsis\core_cmInstr.h" />
 		<Unit filename="inc\30021_io.h" />
+		<Unit filename="inc\accel.h" />
 		<Unit filename="inc\adc.h" />
 		<Unit filename="inc\charset.h" />
 		<Unit filename="inc\flash.h" />
 		<Unit filename="inc\gpio.h" />
+		<Unit filename="inc\gyro.h" />
 		<Unit filename="inc\lcd.h" />
+		<Unit filename="inc\mag.h" />
+		<Unit filename="inc\spi.h" />
 		<Unit filename="inc\stm32f30x.h" />
 		<Unit filename="inc\stm32f30x_conf.h" />
 		<Unit filename="inc\system_stm32f30x.h" />
@@ -190,6 +194,9 @@
 		<Unit filename="src\30021_io.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src\accel.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src\adc.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -199,10 +206,19 @@
 		<Unit filename="src\gpio.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src\gyro.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src\lcd.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src\mag.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src\main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\spi.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\startup_stm32f30x.S">
@@ -218,7 +234,7 @@
 			<debugger>
 				<target_debugging_settings target="Debug" active_interface="OpenOCD">
 					<debug_interface interface_id="J-link" ip_address="" ip_port="" path="" executable="" description="" dont_start_server="false" backoff_time="" options="0" reg_filter="0" active_family="" gdb_before_conn="" gdb_after_conn="" />
-					<debug_interface interface_id="OpenOCD" ip_address="localhost" ip_port="3333" path="C:\OpenOCD\bin-x64" executable="openocd.exe" description="" dont_start_server="false" backoff_time="100" options="0" reg_filter="0" active_family="All" gdb_before_conn="" gdb_after_conn="">
+					<debug_interface interface_id="OpenOCD" ip_address="localhost" ip_port="3333" path="C:\Users\shara\OneDrive\Desktop\30021-Digital I\Ex-1\Debugger_openocd-0.10.0\bin-x64" executable="openocd.exe" description="" dont_start_server="false" backoff_time="100" options="0" reg_filter="0" active_family="All" gdb_before_conn="" gdb_after_conn="">
 						<family_options family_id="All">
 							<option opt_id="ID_BOARD_CH" opt_value="" />
 							<option opt_id="ID_INTERFACE_CH" opt_value="stlink-v2-1" />
