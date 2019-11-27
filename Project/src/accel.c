@@ -56,6 +56,10 @@ void accel_read(float *x, float *y, float *z)
     yi = (accel_read_reg(ACCEL_OUT_Y_H)<<8) | accel_read_reg(ACCEL_OUT_Y_L);
     zi = (accel_read_reg(ACCEL_OUT_Z_H)<<8) | accel_read_reg(ACCEL_OUT_Z_L);
 
+    *x = 1.0 * xi;
+    *y = 1.0 * yi;
+    *z = 1.0 * zi;
+    
     xi -= ACCEL_XCAL;
     yi -= ACCEL_YCAL;
     zi -= ACCEL_ZCAL;

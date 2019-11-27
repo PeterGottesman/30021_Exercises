@@ -19,6 +19,8 @@
 #include "accel.h"
 #include "spi.h"
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
 
 #define Ftimer 64000000
 #define Fck 2560000
@@ -78,7 +80,7 @@ int initCoilLeft(void)
     TIM17->ARR = 1000;
 
     // Set duty cycle to 50%
-    TIM17->CCR1 = 500;
+    TIM17->CCR1 = 1000;
 
     // PSC = (Ftimer/Fck) - 1
     // Ftimer = 64MHz
@@ -103,6 +105,14 @@ int initCoilLeft(void)
     return 0;
 }
 
+void setDuty(int left, int right)
+{
+    // Set right duty cycle
+    TIM16->CCR1 = right;
+	    
+    // Set left duty cycle
+    TIM17->CCR1 = left;
+}
 
 int main(void)
 {
@@ -115,7 +125,7 @@ int main(void)
     float Vdda;
     /*char meas1[26];
       char meas2[26];*/
-
+    
     initPin(GPIOA,0,PIN_MODE_INPUT,PIN_PUPD_NONE, PIN_OTYPE_RESET);
     initPin(GPIOA,1,PIN_MODE_INPUT,PIN_PUPD_NONE, PIN_OTYPE_RESET);
 
@@ -141,56 +151,61 @@ int main(void)
 
     x = y = z = 0;
 
-    float error, integral, desired, actual, output;
-    float Kp, Ki, bias;
+    float error, integral, desired, actual, derivative;
+    float Kp, Ki, Kd, bias;
     float dt;
 
     dt = 1;
-    Kp = 5;
-    Ki = 1;
-    bias = integral = 0;
+    Kp = 8.0;
+    Ki = 5.0;
+    Kd = 0;//-1000.0;
+    bias = integral = derivative = 0;
     
     int count = 0;
+    int tmp = TIM17->CCR1;
+    TIM17->CCR1 = TIM16->CCR1;
+    TIM16->CCR1 = tmp;
 
+    //int states[][2] = {{600, 500}};
+    //int num_states = 1;
+    //int state = 0;
+    int l, r;
+    r = 700;
+    l = 600;
+    setDuty(l, r);
+
+    float mass;
+
+    printf("left,right,x,y,z\n");
     while (1)
     {
-	/* for (int i = 0; i < 10000000; ++i); */
-	count++;
-        if (count % 30 == 0)
-	{
-          int tmp = TIM17->CCR1;
-          TIM17->CCR1 = TIM16->CCR1;
-          TIM16->CCR1 = tmp;
-        } 
-
-        /* uint16_t CH1=ADC_measure_PA(ADC_Channel_1); */
-	/* uint16_t CH2=ADC_measure_PA(ADC_Channel_2); */
-	/* float Vc1 = (rat) * CH1; */
-	/* float Vc2 = (rat) * CH2; */
-	/* /\*snprintf(meas1,25,"%d %.2fV",CH1, Vc1); */
-	/*   snprintf(meas2,25,"%d %.2fV",CH2, Vc2); */
-	/*   printf("meas1: %s\tmeas2: %s\t", meas1, meas2);*\/ */
-	/* printf("CH1: %d\t CH2: %d\t", CH1, CH2); */
-	/* printf("Vc1: %d\t Vc2: %d\n", (int)Vc1, (int)Vc2); */
-	//for(int i = 0; i < 1000000; i++);
-
 	status = accel_status();
 	accel_read(&x, &y, &z);
 
-	/* printf("id: %02x, status: %02x\t", id, status); */
-	/* printf("x: %f, y: %f, z: %f\n", x, y, z); */
-
-	// Desired acceleration in Y axis
-	desired = -0.4f;
-	actual = y;
+	desired = 0.02f;
+	actual = MAX(MIN(y, 0.3), -0.3);
 	error = desired - actual;
 
-	integral = 0.9 * integral + (error * dt);
-	output = Kp * error + Ki * integral + bias;
+	integral = integral + (error * dt);
+	integral = MAX(MIN(integral, 0.05), -0.05);
 
-	printf("actual: %f, error: %.5f, integral: %.5f, output: %.5f\n",
-	       actual, error, integral, output);
+	l += Kp * error + Ki * integral;
+	r = 1300 - l;
+	// > 1g
+	if (l >= 1000)
+	{
+	    mass = -3.9398 * y + 0.5077;
+        } else {
+          // < 1g
+          mass = -0.0032 * r + 1.5747;
+        }
+	
+        printf("Mass %.04f grams\n", mass);
 
-	for(int i = 0; i < 1000000; ++i);
+	if (l < 0) l = 0;
+	if (l > 1000) l = 1000;
+	setDuty(l, r);
+
+	derivative = error;
     }
 }
